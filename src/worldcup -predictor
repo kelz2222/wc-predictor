@@ -1,0 +1,287 @@
+import { useState, useEffect } from "react";
+
+const FLAG_MAP = {
+  "Brazil":"🇧🇷","Argentina":"🇦🇷","France":"🇫🇷","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Germany":"🇩🇪",
+  "Spain":"🇪🇸","Portugal":"🇵🇹","Netherlands":"🇳🇱","USA":"🇺🇸","United States":"🇺🇸",
+  "Japan":"🇯🇵","Morocco":"🇲🇦","Senegal":"🇸🇳","Italy":"🇮🇹","Croatia":"🇭🇷",
+  "Belgium":"🇧🇪","Denmark":"🇩🇰","Mexico":"🇲🇽","Ecuador":"🇪🇨","Canada":"🇨🇦",
+  "Uruguay":"🇺🇾","Colombia":"🇨🇴","Chile":"🇨🇱","Serbia":"🇷🇸","Switzerland":"🇨🇭",
+  "Austria":"🇦🇹","Turkey":"🇹🇷","Poland":"🇵🇱","Ukraine":"🇺🇦","Australia":"🇦🇺",
+  "South Korea":"🇰🇷","Korea Republic":"🇰🇷","Iran":"🇮🇷","Saudi Arabia":"🇸🇦",
+  "Cameroon":"🇨🇲","Ghana":"🇬🇭","Nigeria":"🇳🇬","Egypt":"🇪🇬","Qatar":"🇶🇦",
+  "Wales":"🏴󠁧󠁢󠁷󠁬󠁳󠁿","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Costa Rica":"🇨🇷","Panama":"🇵🇦",
+  "Venezuela":"🇻🇪","Peru":"🇵🇪","Paraguay":"🇵🇾","Bolivia":"🇧🇴",
+  "Algeria":"🇩🇿","Tunisia":"🇹🇳","Mali":"🇲🇱","Ivory Coast":"🇨🇮",
+  "DR Congo":"🇨🇩","South Africa":"🇿🇦","Indonesia":"🇮🇩","China":"🇨🇳",
+  "Iraq":"🇮🇶","UAE":"🇦🇪","New Zealand":"🇳🇿","Slovakia":"🇸🇰",
+  "Czech Republic":"🇨🇿","Hungary":"🇭🇺","Romania":"🇷🇴","Greece":"🇬🇷",
+  "Sweden":"🇸🇪","Norway":"🇳🇴","Finland":"🇫🇮","Iceland":"🇮🇸",
+};
+const getFlag = (name) => FLAG_MAP[name] || "🏳️";
+
+const FALLBACK_MATCHES = [
+  { id:1,  group:"A", home:"🇨🇦 Canada",    away:"🇲🇽 Mexico",      date:"Jun 11", time:"20:00", venue:"SoFi Stadium",     status:"SCHEDULED" },
+  { id:2,  group:"A", home:"🇺🇸 USA",       away:"🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales",       date:"Jun 12", time:"17:00", venue:"MetLife Stadium",   status:"SCHEDULED" },
+  { id:3,  group:"B", home:"🇦🇷 Argentina", away:"🇲🇦 Morocco",     date:"Jun 12", time:"20:00", venue:"Rose Bowl",          status:"SCHEDULED" },
+  { id:4,  group:"B", home:"🇧🇷 Brazil",    away:"🇳🇬 Nigeria",     date:"Jun 13", time:"17:00", venue:"AT&T Stadium",       status:"SCHEDULED" },
+  { id:5,  group:"C", home:"🇫🇷 France",    away:"🇩🇰 Denmark",     date:"Jun 13", time:"20:00", venue:"Levis Stadium",      status:"SCHEDULED" },
+  { id:6,  group:"C", home:"🇦🇺 Australia", away:"🇸🇳 Senegal",     date:"Jun 14", time:"14:00", venue:"Hard Rock Stadium",  status:"SCHEDULED" },
+  { id:7,  group:"D", home:"🇩🇪 Germany",   away:"🇯🇵 Japan",       date:"Jun 14", time:"17:00", venue:"Gillette Stadium",   status:"SCHEDULED" },
+  { id:8,  group:"D", home:"🇪🇸 Spain",     away:"🇨🇷 Costa Rica",  date:"Jun 14", time:"20:00", venue:"Lincoln Financial",  status:"SCHEDULED" },
+  { id:9,  group:"E", home:"🇵🇹 Portugal",  away:"🇺🇾 Uruguay",     date:"Jun 15", time:"17:00", venue:"SoFi Stadium",       status:"SCHEDULED" },
+  { id:10, group:"E", home:"🇧🇪 Belgium",   away:"🇸🇦 Saudi Arabia",date:"Jun 15", time:"20:00", venue:"MetLife Stadium",    status:"SCHEDULED" },
+  { id:11, group:"F", home:"🇭🇷 Croatia",   away:"🇨🇦 Canada",      date:"Jun 16", time:"14:00", venue:"Rose Bowl",          status:"SCHEDULED" },
+  { id:12, group:"F", home:"🇲🇦 Morocco",   away:"🇨🇴 Colombia",    date:"Jun 16", time:"17:00", venue:"Allegiant Stadium",  status:"SCHEDULED" },
+];
+
+const AVATARS = ["🦁","🐯","🦊","🦅","🐉","🐺","🦈","🐻","🦋","🐬","🎯","⚡"];
+const LEADERBOARD_DATA = [
+  { name:"GoalKing99",   avatar:"🦁", points:147, streak:5, badges:["🔥","⚡","👑"], correct:18, perfect:4 },
+  { name:"TikiTaka",     avatar:"🐯", points:132, streak:3, badges:["🔥","⚡"],      correct:16, perfect:3 },
+  { name:"OffsideTrap",  avatar:"🦊", points:119, streak:2, badges:["🔥"],           correct:14, perfect:2 },
+  { name:"PressureCook", avatar:"🦅", points:105, streak:0, badges:["⚡"],           correct:13, perfect:1 },
+  { name:"NinetyPlus",   avatar:"🐉", points:98,  streak:1, badges:[],               correct:12, perfect:1 },
+  { name:"DarkHorse77",  avatar:"🐺", points:87,  streak:2, badges:["🔥"],           correct:10, perfect:2 },
+  { name:"PenaltyKing",  avatar:"🦈", points:74,  streak:0, badges:[],               correct:9,  perfect:0 },
+  { name:"FreekickFred", avatar:"🐻", points:61,  streak:1, badges:[],               correct:8,  perfect:1 },
+];
+const CHALLENGES = [
+  { id:1, icon:"🎯", title:"Sharpshooter",    desc:"Get 5 correct results",          pts:50,  goal:5, key:"correct" },
+  { id:2, icon:"🔥", title:"On Fire",         desc:"3 correct predictions in a row", pts:30,  goal:3, key:"streak"  },
+  { id:3, icon:"💎", title:"Perfect Prophet", desc:"Get an exact scoreline right",    pts:75,  goal:1, key:"perfect" },
+  { id:4, icon:"🐎", title:"Dark Horse",      desc:"Predict an upset correctly",      pts:100, goal:1, key:"upset"   },
+  { id:5, icon:"📊", title:"Group Guru",      desc:"Predict all Group A matches",     pts:120, goal:6, key:"groupA"  },
+  { id:6, icon:"👑", title:"World Champion",  desc:"Top the leaderboard for 3 days",  pts:500, goal:3, key:"topDays" },
+];
+const PLANS = [
+  { id:"free",  label:"Free",  price:0,     features:["12 predictions/round","Public leaderboard","Basic badges"] },
+  { id:"pro",   label:"Pro",   price:4.99,  features:["Unlimited predictions","Private leagues","AI match tips","Share card","Priority support"], popular:true },
+  { id:"elite", label:"Elite", price:14.99, features:["Everything in Pro","Prize pool entry","Analytics dashboard","Custom avatar","Early access"] },
+];
+
+const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } };
+const save = (k, v)   => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+export default function App() {
+  const [screen, setScreen]             = useState("onboard");
+  const [tab, setTab]                   = useState("predict");
+  const [user, setUser]                 = useState(() => load("wc_user", null));
+  const [predictions, setPredictions]   = useState(() => load("wc_preds", {}));
+  const [submitted, setSubmitted]       = useState(() => load("wc_submitted", {}));
+  const [inputVals, setInputVals]       = useState({});
+  const [userPoints, setUserPoints]     = useState(() => load("wc_points", 0));
+  const [correctCount, setCorrectCount] = useState(() => load("wc_correct", 0));
+  const [perfectCount, setPerfectCount] = useState(() => load("wc_perfect", 0));
+  const [streak, setStreak]             = useState(() => load("wc_streak", 0));
+  const [confetti, setConfetti]         = useState(false);
+  const [toast, setToast]               = useState(null);
+  const [shareModal, setShareModal]     = useState(null);
+  const [upgradeModal, setUpgradeModal] = useState(false);
+  const [aiTip, setAiTip]               = useState({});
+  const [loadingTip, setLoadingTip]     = useState({});
+  const [league, setLeague]             = useState(() => load("wc_league", null));
+  const [leagueCode, setLeagueCode]     = useState("");
+  const [leagueName, setLeagueName]     = useState("");
+  const [plan, setPlan]                 = useState(() => load("wc_plan", "free"));
+  const [onboardName, setOnboardName]   = useState("");
+  const [onboardAvatar, setOnboardAvatar] = useState("🦁");
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [installBanner, setInstallBanner] = useState(false);
+  const [isIos, setIsIos]               = useState(false);
+  const [isInstalled, setIsInstalled]   = useState(false);
+  const [iosBanner, setIosBanner]       = useState(false);
+  const [matches, setMatches]           = useState(FALLBACK_MATCHES);
+  const [liveResults, setLiveResults]   = useState({});
+  const [loadingMatches, setLoadingMatches] = useState(true);
+  const [apiStatus, setApiStatus]       = useState("loading");
+  const [lastUpdated, setLastUpdated]   = useState(null);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const API_KEY = "e048355538a24efd95b504e5e1d2a392";
+        const res = await fetch("https://api.football-data.org/v4/competitions/WC/matches?season=2026", { headers: { "X-Auth-Token": API_KEY } });
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = await res.json();
+        const formatted = (data.matches || []).map(m => ({
+          id: m.id,
+          group: m.group?.replace("GROUP_","") ?? m.stage?.replace(/_/g," ") ?? "?",
+          home: `${getFlag(m.homeTeam.name)} ${m.homeTeam.name}`,
+          away: `${getFlag(m.awayTeam.name)} ${m.awayTeam.name}`,
+          date: new Date(m.utcDate).toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+          time: new Date(m.utcDate).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}),
+          venue: m.venue || "TBC",
+          status: m.status,
+        }));
+        if (formatted.length > 0) { setMatches(formatted); setApiStatus("live"); }
+        else { setMatches(FALLBACK_MATCHES); setApiStatus("fallback"); }
+        const results = {};
+        (data.matches || []).forEach(m => {
+          if (m.status === "FINISHED" && m.score?.fullTime) results[m.id] = { home: m.score.fullTime.home, away: m.score.fullTime.away };
+        });
+        setLiveResults(results); setLastUpdated(new Date());
+      } catch (err) {
+        console.warn("Football API unavailable:", err.message);
+        setMatches(FALLBACK_MATCHES); setApiStatus("fallback");
+      }
+      setLoadingMatches(false);
+    };
+    fetchMatches();
+    const interval = setInterval(fetchMatches, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) { setIsInstalled(true); return; }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    setIsIos(ios);
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); setInstallBanner(true); };
+    window.addEventListener("beforeinstallprompt", handler);
+    if (ios) setTimeout(() => setIosBanner(true), 4000);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") { setIsInstalled(true); setInstallBanner(false); showToast("App installed! Find it on your home screen"); }
+    setInstallPrompt(null);
+  };
+
+  useEffect(() => { if (user) setScreen("main"); }, [user]);
+  useEffect(() => { save("wc_preds", predictions); },    [predictions]);
+  useEffect(() => { save("wc_submitted", submitted); },  [submitted]);
+  useEffect(() => { save("wc_points", userPoints); },    [userPoints]);
+  useEffect(() => { save("wc_correct", correctCount); }, [correctCount]);
+  useEffect(() => { save("wc_perfect", perfectCount); }, [perfectCount]);
+  useEffect(() => { save("wc_streak", streak); },        [streak]);
+
+  const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
+
+  const handleScoreInput = (matchId, side, val) => {
+    const newVals = { ...inputVals, [`${matchId}_${side}`]: val };
+    setInputVals(newVals);
+    const homeVal = side === "home" ? val : (newVals[`${matchId}_home`] ?? "");
+    const awayVal = side === "away" ? val : (newVals[`${matchId}_away`] ?? "");
+    if (homeVal !== "" && awayVal !== "") setPredictions(p => ({ ...p, [matchId]: { home: parseInt(homeVal)||0, away: parseInt(awayVal)||0 } }));
+  };
+
+  const submitPrediction = (matchId) => {
+    if (!predictions[matchId]) { showToast("Enter a score first!", "error"); return; }
+    setSubmitted(s => ({ ...s, [matchId]: true }));
+    const result = liveResults[matchId];
+    if (result) {
+      const pred = predictions[matchId];
+      if (pred.home === result.home && pred.away === result.away) {
+        setUserPoints(p => p+10); setPerfectCount(p => p+1); setCorrectCount(p => p+1); setStreak(s => s+1);
+        showToast("PERFECT SCORE! +10 pts", "perfect");
+        setConfetti(true); setTimeout(() => setConfetti(false), 3000);
+        setShareModal({ match: matches.find(m=>m.id===matchId), pred, result });
+      } else if ((pred.home>pred.away&&result.home>result.away)||(pred.away>pred.home&&result.away>result.home)||(pred.home===pred.away&&result.home===result.away)) {
+        setUserPoints(p => p+5); setCorrectCount(p => p+1); setStreak(s => s+1); showToast("Correct result! +5 pts");
+      } else { setStreak(0); showToast("Wrong prediction. Keep going!", "error"); }
+    } else { showToast("Locked in! Good luck!", "success"); }
+  };
+
+  const fetchAiTip = async (match) => {
+    if (plan === "free") { setUpgradeModal(true); return; }
+    if (aiTip[match.id] || loadingTip[match.id]) return;
+    setLoadingTip(l => ({ ...l, [match.id]: true }));
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:180,
+          messages:[{role:"user",content:`You are a football pundit. Give a sharp 2-sentence prediction tip for this World Cup match: ${match.home} vs ${match.away}. Include a likely scoreline and the key factor. Be bold and fun. End with one emoji: fire, lightning, or target.`}]
+        })
+      });
+      const data = await res.json();
+      setAiTip(t => ({ ...t, [match.id]: data.content?.[0]?.text || "Expect a tight contest — this one is too close to call! ⚡" }));
+    } catch { setAiTip(t => ({ ...t, [match.id]: "Both teams are in form — this one could go either way. Watch the midfield battle! ⚡" })); }
+    setLoadingTip(l => ({ ...l, [match.id]: false }));
+  };
+
+  const createLeague = () => {
+    const code = Math.random().toString(36).substring(2,8).toUpperCase();
+    const l = { code, name: leagueName||"My League", members:[user.name], creator:user.name };
+    setLeague(l); save("wc_league",l); showToast(`League created! Code: ${code}`);
+  };
+  const joinLeague = () => {
+    const l = { code:leagueCode, name:`League ${leagueCode}`, members:[user.name,"GoalKing99","TikiTaka"], creator:"GoalKing99" };
+    setLeague(l); save("wc_league",l); showToast(`Joined league ${leagueCode}!`);
+  };
+  const completeOnboard = () => {
+    if (!onboardName.trim()) { showToast("Enter your name!", "error"); return; }
+    const u = { name:onboardName.trim(), avatar:onboardAvatar, joined:new Date().toISOString() };
+    setUser(u); save("wc_user",u); setScreen("main");
+  };
+
+  const lbData = [...LEADERBOARD_DATA, { name:user?.name||"You", avatar:user?.avatar||"⭐", points:userPoints, streak, badges:[], correct:correctCount, perfect:perfectCount, isUser:true }].sort((a,b)=>b.points-a.points);
+  const userRank = lbData.findIndex(p=>p.isUser)+1;
+
+  if (screen === "onboard") return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#080c14",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px",position:"relative",overflow:"hidden"}}>
+      <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <GlowBg/><style>{GLOBAL_CSS}</style>
+      <div style={{width:"100%",maxWidth:"400px",position:"relative",zIndex:10}}>
+        <div style={{textAlign:"center",marginBottom:"32px"}}>
+          <div style={{fontSize:"64px",marginBottom:"8px"}}>⚽</div>
+          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"48px",margin:"0 0 8px",letterSpacing:"3px",background:"linear-gradient(135deg,#fff 40%,#ffd700)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>WORLD CUP 2026</h1>
+          <p style={{color:"rgba(255,255,255,0.5)",fontSize:"14px",margin:0}}>Predict matches · Beat friends · Win prizes</p>
+        </div>
+        <div className="card" style={{padding:"28px"}}>
+          <div style={{marginBottom:"20px"}}>
+            <label style={{display:"block",fontSize:"11px",letterSpacing:"2px",color:"rgba(255,255,255,0.4)",marginBottom:"8px"}}>YOUR NAME</label>
+            <input value={onboardName} onChange={e=>setOnboardName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&completeOnboard()} placeholder="Enter your name..."
+              style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"10px",padding:"12px 14px",color:"#fff",fontSize:"16px",outline:"none",boxSizing:"border-box"}}/>
+          </div>
+          <div style={{marginBottom:"24px"}}>
+            <label style={{display:"block",fontSize:"11px",letterSpacing:"2px",color:"rgba(255,255,255,0.4)",marginBottom:"10px"}}>PICK YOUR AVATAR</label>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:"8px"}}>
+              {AVATARS.map(a=>(
+                <button key={a} onClick={()=>setOnboardAvatar(a)} style={{background:onboardAvatar===a?"rgba(0,200,80,0.25)":"rgba(255,255,255,0.05)",border:onboardAvatar===a?"2px solid #00c850":"2px solid transparent",borderRadius:"10px",padding:"8px",fontSize:"22px",cursor:"pointer",transition:"all 0.15s"}}>{a}</button>
+              ))}
+            </div>
+          </div>
+          <button className="btn-primary" style={{width:"100%",padding:"14px",fontSize:"17px"}} onClick={completeOnboard}>START PREDICTING →</button>
+          <p style={{textAlign:"center",fontSize:"11px",color:"rgba(255,255,255,0.25)",marginTop:"12px",marginBottom:0}}>Free to play · No credit card needed</p>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",gap:"24px",marginTop:"20px"}}>
+          {[["1,247","PLAYERS"],["$350","PRIZE POOL"],["48","MATCHES"]].map(([v,l])=>(
+            <div key={l} style={{textAlign:"center"}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"22px",color:"#00c850"}}>{v}</div>
+              <div style={{fontSize:"10px",color:"rgba(255,255,255,0.3)",letterSpacing:"2px"}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#080c14",minHeight:"100vh",color:"#fff",position:"relative"}}>
+      <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <style>{GLOBAL_CSS}</style>
+      <GlowBg/>
+      <Confetti active={confetti}/>
+      {toast && <Toast toast={toast}/>}
+
+      {installBanner && !isInstalled && (
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:300,background:"linear-gradient(135deg,#0d1f12,#0a1a1e)",borderTop:"1px solid rgba(0,200,80,0.3)",padding:"14px 16px",display:"flex",alignItems:"center",gap:"12px",boxShadow:"0 -8px 32px rgba(0,0,0,0.5)",animation:"slideUp 0.4s ease"}}>
+          <div style={{fontSize:"36px",flexShrink:0}}>📲</div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"17px",letterSpacing:"1px"}}>INSTALL THE APP</div>
+            <div style={{fontSize:"12px",color:"rgba(255,255,255,0.5)",marginTop:"1px"}}>Add to home screen — works offline, loads instantly</div>
+          </div>
+          <div style={{display:"flex",gap:"8px",flexShrink:0}}>
+            <button className="btn-primary" style={{padding:"9px 18px",fontSize:"13px",whiteSpace:"nowrap"}} onClick={handleInstall}>Install</button>
+            <button onClick={()=>setInstallBanner(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:"20px",padding:"4px 6px",lineHeight:1}}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {isIos && iosBanner && !isInstalled && (
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:300,background:"linear-gradient(135deg,#0d1420,#0a1230)",borderTop:"1px solid rgba(0,150,255,0.3)",padding:"16px",boxShadow:"0 -8px 32px rgba(0,0,0,0.5)",animation:"slideUp 0.4s ease"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"12px"}}>
+            <div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"17px",letterS
